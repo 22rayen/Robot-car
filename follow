@@ -1,0 +1,212 @@
+#include <Servo.h>
+#include <arduino.h>
+#include <AFMotor.h>
+
+Servo Servo1;
+
+int servoPin = 10;
+int R_s = A0;
+int M_s = A1;
+int L_s = A2;
+int R;
+int M;
+int L;
+
+#define MotorA 7
+#define MotorA_Speed 5
+#define MotorB 8
+#define MotorB_Speed 6
+#define trigPin 13
+#define echoPin 12
+#define MAX_DISTANCE 200
+
+int F1_t = 2000;
+int F2_t = 2000;
+int R1_t = 1000;
+int R2_t = 800;
+int look_t = 1000;
+int forward = 90;
+int right = 20;
+int left = 160;
+int stopDist = 50;
+int smallDist = 20;
+int critDist = 5;
+float duration, distance;
+
+void setup() {
+  Serial.begin(9600);
+  Servo1.attach(servoPin);
+  for (int i = 3; i < 9; i++) {
+    pinMode(i, OUTPUT);
+    digitalWrite(3, 1);
+    pinMode(trigPin, OUTPUT);
+    pinMode(echoPin, INPUT);
+  }
+}
+
+void loop() {
+look_f();
+ 
+  mesureDistance();
+  Serial.print(distance);
+  Serial.println("cm");
+   float rightDist = mesureDistRgt();
+   float leftDist = mesureDistLft();
+
+   if (distance <= stopDist ){
+mesureDistRgt();
+delay (500);
+
+mesureDistLft();
+delay (500);
+   }
+if (distance < rightDist){
+  Rgt(55);
+  delay(500);
+}
+if (distance < leftDist){
+  Lft(55);
+  delay(500);
+}
+
+   if (distance >= stopDist){
+    Fwd (55);
+ }
+}
+ 
+ void avoid(){
+  look_f();
+ 
+  
+  if (distance >= stopDist) {
+    Bkw(55);// go forward
+    }
+   
+   if (distance <= stopDist){
+    Stp(0);
+   delay(1000);
+ }
+  float rightDist = mesureDistRgt();
+   float leftDist = mesureDistLft();
+
+  if (leftDist < smallDist){
+
+Stp(0);
+delay(500);
+Lft(55);
+ delay(500);
+ 
+ }
+ else if ( rightDist < smallDist){
+  Rgt(55);
+  delay(500);
+   
+  }
+  else {
+    Rgt(55);
+  delay(1000);
+  }
+  
+ }
+
+
+
+
+
+float mesureDistance() {
+  digitalWrite(trigPin, LOW);
+  delay(2);
+  digitalWrite(trigPin, HIGH);
+  delay(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);
+  distance = (duration / 2) * 0.0343;
+  return distance; // Return the calculated distance
+}
+float mesureDistLft(){
+  look_l();
+  return mesureDistance();
+}
+float mesureDistRgt(){
+  look_r();
+  return mesureDistance();
+}
+void move(bool a, int b, bool c, int d) {
+  digitalWrite(MotorA, a);
+  analogWrite(MotorA_Speed, b);
+  digitalWrite(MotorB, c);
+  analogWrite(MotorB_Speed, d);
+}
+
+void Fwd(int x) {
+  move(1, x, 1, x);
+}
+
+void Bkw(int x) {
+  move(0, x, 0, x);
+}
+
+void Rgt(int x) {
+  move(0, x, 1, x);
+}
+
+void Lft(int x) {
+  move(1, x, 0, x);
+}
+
+void LtFw(int x) {
+  move(1, x / 2, 1, x);
+}
+
+void RtFw(int x) {
+  move(1, x, 1, x / 2);
+}
+
+void RtBw(int x) {
+  move(0, x, 0, x / 2);
+}
+
+void LtBw(int x) {
+  move(0, x / 2, 0, x);
+}
+
+void Stp(int x) {
+  move(1, x, 1, x);
+}
+
+void followLine() {
+  R = analogRead(R_s);
+  M = analogRead(M_s);
+  L = analogRead(L_s);
+  if (M <= 200) {
+    Fwd(50);
+  } else if (R <= 200) {
+    Rgt(50);
+  } else if (R <= 200 && M <= 200) {
+    RtFw(50);
+  } else if (L <= 200 && M <= 200) {
+    LtFw(50);
+  } else if (M >= 200) {
+    Rgt(50);
+  }
+}
+
+
+
+
+
+
+void look_r() {
+  Servo1.write(right);
+  delay(1000);
+}
+
+void look_l() {
+  Servo1.write(left);
+  delay(1000);
+}
+
+void look_f() {
+  Servo1.write(forward);
+  delay(1000);
+}
